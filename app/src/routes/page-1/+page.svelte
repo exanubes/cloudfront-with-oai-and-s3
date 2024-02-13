@@ -1,0 +1,1 @@
+<h2 class="text-xl"> Bienvenidos amigos </h2>

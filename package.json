@@ -1,0 +1,25 @@
+{
+  "name": "cloudfront-with-oai-and-s3",
+  "version": "1.0.0",
+  "description": "Example application to demonstrate how to use CloudFront's Origin Access Identity to protect S3 content from being accessed directly.",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm --prefix ./app start",
+    "synth": "npm --prefix ./infrastructure run synth",
+    "deploy": "npm --prefix ./infrastructure run deploy",
+    "destroy": "npm --prefix ./infrastructure run destroy",
+    "presetup": "npm install",
+    "setup": "concurrently npm:install:*",
+    "install:app": "npm --prefix ./app install",
+    "install:infrastructure": "npm --prefix ./infrastructure install",
+    "cleanup": "trash **/node_modules",
+    "postcleanup": "trash node_modules"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "trash-cli": "^5.0.0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
