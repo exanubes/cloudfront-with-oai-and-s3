@@ -1,9 +1,15 @@
 #!/usr/bin/env node
 import "source-map-support/register";
-import {resolveCurrentUserOwnerName} from "@exanubes/cdk-utils";
+import {getRegion, resolveCurrentUserOwnerName} from "@exanubes/cdk-utils";
 import {App, PhysicalName, RemovalPolicy, Stack, Tags} from "aws-cdk-lib";
 import {Bucket} from "aws-cdk-lib/aws-s3";
-import {Distribution, experimental, LambdaEdgeEventType, ViewerProtocolPolicy} from "aws-cdk-lib/aws-cloudfront";
+import {
+    Distribution,
+    experimental,
+    LambdaEdgeEventType,
+    OriginAccessIdentity,
+    ViewerProtocolPolicy
+} from "aws-cdk-lib/aws-cloudfront";
 import {S3Origin} from "aws-cdk-lib/aws-cloudfront-origins";
 import {Certificate} from "aws-cdk-lib/aws-certificatemanager";
 import {CERTIFICATE_ARN, HOSTED_ZONE_ID} from "./config";
@@ -17,19 +23,24 @@ import {RetentionDays} from "aws-cdk-lib/aws-logs";
 require('dotenv').config()
 async function main() {
     const owner = await resolveCurrentUserOwnerName();
+    const region = await getRegion();
     const app = new App();
-    const stack = new Stack(app, 'Stack', {});
+    const stack = new Stack(app, 'Stack', {
+        env: {
+            region
+        }
+    });
     const bucket = new Bucket(stack, 'bucket', {
         bucketName: PhysicalName.GENERATE_IF_NEEDED,
         websiteIndexDocument: 'index.html',
         websiteErrorDocument: 'index.html',
-        blockPublicAccess: {
+        /*blockPublicAccess: {
             blockPublicAcls: false,
             blockPublicPolicy: false,
             restrictPublicBuckets: false,
             ignorePublicAcls: false
-        },
-        publicReadAccess: true,
+        },*/
+        publicReadAccess: false,
         removalPolicy: RemovalPolicy.DESTROY,
         autoDeleteObjects: true
     });
@@ -42,13 +53,20 @@ async function main() {
         runtime: Runtime.NODEJS_LATEST,
         logRetention: RetentionDays.ONE_DAY
     })
+    const oai = new OriginAccessIdentity(stack, 'oai', {
+        comment: 'exanubes-website-oai'
+    })
+
+    bucket.grantRead(oai);
 
     const distribution = new Distribution(stack, 'distribution', {
         certificate,
         defaultRootObject: "index.html",
         domainNames: ["exanub.es"],
         defaultBehavior: {
-            origin: new S3Origin(bucket),
+            origin: new S3Origin(bucket, {
+                originAccessIdentity: oai
+            }),
             viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
             edgeLambdas: [{
                 functionVersion: edgeLambda.currentVersion,
