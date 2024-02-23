@@ -32,8 +32,8 @@ async function main() {
     });
     const bucket = new Bucket(stack, 'bucket', {
         bucketName: PhysicalName.GENERATE_IF_NEEDED,
-        websiteIndexDocument: 'index.html',
-        websiteErrorDocument: 'index.html',
+        // websiteIndexDocument: 'index.html',
+        // websiteErrorDocument: 'index.html',
         /*blockPublicAccess: {
             blockPublicAcls: false,
             blockPublicPolicy: false,
